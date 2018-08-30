@@ -7,6 +7,10 @@ use Event;
 use Lang;
 use JsLocalization\Facades\JsLocalizationHelper;
 
+/**
+ * Class MessageCachingService
+ * @package JsLocalization\Caching
+ */
 class MessageCachingService extends AbstractCachingService
 {
 
@@ -32,20 +36,25 @@ class MessageCachingService extends AbstractCachingService
     }
 
     /**
-     * Returns the cached messages (already JSON encoded).
-     * Creates the necessary cache item if necessary.
+     * Returns the messages (already JSON encoded).
+     * Refreshes the cache if necessary.
      *
+     * @param bool $noCache (optional) Defines if cache should be ignored.
      * @return string JSON encoded messages object.
      */
-    public function getMessagesJson()
+    public function getMessagesJson($noCache = false)
     {
-        return $this->getData();
+        if ($noCache) {
+            return $this->createMessagesJson();
+        } else {
+            return $this->getData();
+        }
     }
 
     /**
-     * Refreshs the cache item containing the JSON encoded
+     * Refreshes the cache item containing the JSON encoded
      * messages object.
-     * Fires the 'JsLocalization.refresh' event.
+     * Fires the 'JsLocalization.registerMessages' event.
      *
      * @return void
      */
@@ -53,11 +62,20 @@ class MessageCachingService extends AbstractCachingService
     {
         Event::fire('JsLocalization.registerMessages');
 
+        $messagesJSON = $this->createMessagesJson();
+        $this->refreshCacheUsing($messagesJSON);
+    }
+
+    /**
+     * @return string
+     */
+    protected function createMessagesJson()
+    {
         $locales = $this->getLocales();
         $messageKeys = $this->getMessageKeys();
         $translatedMessages = $this->getTranslatedMessagesForLocales($messageKeys, $locales);
 
-        $this->refreshCacheUsing(json_encode($translatedMessages));
+        return json_encode($translatedMessages);
     }
 
     /**
@@ -157,5 +175,4 @@ class MessageCachingService extends AbstractCachingService
 
         return $messageKeys;
     }
-
 }
