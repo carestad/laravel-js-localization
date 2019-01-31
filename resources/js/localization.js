@@ -67,6 +67,10 @@
          * @return {String} Translated message.
          */
         get : function(messageKey, replacements, forceLocale) {
+            if (messageKey === '') {
+                return '';
+            }
+
             var uselocale = locale;
             if (forceLocale) {
                 uselocale = forceLocale;
